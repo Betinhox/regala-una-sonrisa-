@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Actividad Regala Una Sonrisa</title>
+
+<style>
+body { font-family: 'Times New Roman', serif; margin:0; background:#f4f6f9; color:#333; }
+header { background:#002b5c; color:white; padding:25px; display:flex; justify-content:center; align-items:center; gap:20px; border-bottom:4px solid #004a99; }
+header img { height:50px; width:50px; border-radius:50%; object-fit:cover; transition: transform 0.3s; }
+header img:hover { transform: scale(1.2); }
+
+table { width:95%; margin:30px auto; border-collapse: collapse; background:white; border-radius:10px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+th { background:#002b5c; color:white; padding:14px; font-size:18px; }
+td { padding:12px; border-bottom:1px solid #ddd; text-align:center; }
+tr:hover { background:#f1f1f1; }
+
+button { padding:8px 14px; background:#007bff; color:white; border:none; border-radius:5px; cursor:pointer; font-size:14px; transition: background 0.3s; }
+button:hover { background:#0056b3; }
+
+.btn-delete {
+    background: #d9534f;
+}
+.btn-delete:hover {
+    background:#b52b27;
+}
+
+tr.colaborador { 
+    background:#e0f7fa; 
+    font-style:italic; 
+}
+</style>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+// 🔹 Config Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyD3Fpj_gIT9XO9JOfO3E6-Ws9NfzIoRX8Q",
+  authDomain: "actividad-regala-una-son-5e24c.firebaseapp.com",
+  databaseURL: "https://actividad-regala-una-son-5e24c-default-rtdb.firebaseio.com",
+  projectId: "actividad-regala-una-son-5e24c",
+  storageBucket: "actividad-regala-una-son-5e24c.firebasestorage.app",
+  messagingSenderId: "992415955362",
+  appId: "1:992415955362:web:24bafb52947a6bedaa9afb",
+  measurementId: "G-ZZDW8BYV5E"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Lista de niños
+const personas = [
+  { nombre: "Melany Hernandez", edad: "6" },
+  { nombre: "Mauricio Hernandez", edad: "9" },
+  { nombre: "Said Hernandez", edad: "2" },
+  { nombre: "Nahun Ruiz", edad: "6" },
+  { nombre: "David Mejia", edad: "7" },
+  { nombre: "Eric Perez", edad: "9" },
+  { nombre: "Angel Martinez", edad: "8" },
+  { nombre: "Asareth Martinez", edad: "10" },
+  { nombre: "Doliny Martinez", edad: "8" },
+  { nombre: "Ariana Martinez", edad: "7" },
+  { nombre: "Elvin Zepeda", edad: "10" },
+  { nombre: "Ester Baquedano", edad: "6" },
+  { nombre: "Monserrath Rosa", edad: "9" },
+  { nombre: "Helen Rosa", edad: "6" },
+  { nombre: "Stefany Perez", edad: "12" },
+  { nombre: "Anderson Perez", edad: "8 meses" },
+  { nombre: "Junior Argueta", edad: "4" },
+  { nombre: "Mateo Samura", edad: "2" },
+  { nombre: "Kataleya Martinez", edad: "9 meses" },
+  { nombre: "Blademir Martinez", edad: "3" },
+  { nombre: "Sadriana Cedeño", edad: "2" },
+  { nombre: "Genesis Izaguirre", edad: "10" },
+  { nombre: "Santiago Izaguirre", edad: "4" },
+  { nombre: "Julianis Benitez", edad: "12" },
+  { nombre: "Kristian Amador", edad: "12" },
+  { nombre: "Ailin Carranza", edad: "7" },
+  { nombre: "Valerin Perez", edad: "5" },
+  { nombre: "Sofia Sanchez", edad: "9" },
+  { nombre: "Sagson Sanchez", edad: "7" },
+  { nombre: "Korin Sanchez", edad: "3" },
+  { nombre: "Marlen Espinal", edad: "2" },
+  { nombre: "Kalet Baquedano", edad: "7" },
+  { nombre: "Alexander Andino", edad: "1 mes" },
+  { nombre: "Atana Izaguirre", edad: "3" },
+  { nombre: "Sivan Guillen", edad: "3" },
+  { nombre: "Guadalupe Flores", edad: "12" },
+  { nombre: "Nahomi Montes", edad: "10" },
+  { nombre: "Dilan Reyes", edad: "8" },
+  { nombre: "Axel Montes", edad: "2" },
+  { nombre: "Angel Ulloa", edad: "10" },
+  { nombre: "Mateo Alvarado", edad: "2" },
+  { nombre: "Josue Alvarado", edad: "8" },
+  { nombre: "Alexa Sierra", edad: "4" },
+  { nombre: "David Sierra", edad: "3" },
+  { nombre: "Lihieth Martinez", edad: "5" },
+  { nombre: "Mauricio Martinez", edad: "11" },
+  { nombre: "Isaias Barahona", edad: "6" },
+  { nombre: "Francis Ester", edad: "2" },
+  { nombre: "Francis Abigail", edad: "2" },
+  { nombre: "Aranza Flores", edad: "7" },
+  { nombre: "Maite Flores", edad: "11" }
+];
+
+window.addEventListener('DOMContentLoaded', () => {
+  cargarTabla();
+
+  const colaboradoresRef = ref(db, 'colaboradores');
+  onValue(colaboradoresRef, (snapshot) => {
+    const data = snapshot.val();
+    actualizarColaboradores(data);
+  });
+});
+
+function cargarTabla() {
+  const tabla = document.getElementById("tablaPersonas");
+  tabla.innerHTML = `<tr><th>Nombre</th><th>Edad</th><th>Acción</th></tr>`;
+
+  personas.forEach(p => {
+    const fila = document.createElement("tr");
+    fila.classList.add("fila-niño");
+    fila.setAttribute("data-nombre", p.nombre);
+
+    fila.innerHTML = `
+      <td>${p.nombre}</td>
+      <td>${p.edad}</td>
+      <td><button onclick="agregarColaborador('${p.nombre}')">Agregar colaborador</button></td>
+    `;
+    tabla.appendChild(fila);
+  });
+}
+
+// AGREGAR colaborador
+window.agregarColaborador = function(persona) {
+  const colaborador = prompt("Ingrese su nombre para registrar colaboración:");
+  if (!colaborador || colaborador.trim() === "") {
+    alert("Debe ingresar un nombre válido");
+    return;
+  }
+  push(ref(db, 'colaboradores'), { persona: persona, colaborador: colaborador });
+};
+
+// ELIMINAR colaborador
+window.eliminarColaborador = function(id) {
+  if (confirm("¿Eliminar este colaborador?")) {
+    remove(ref(db, 'colaboradores/' + id));
+  }
+};
+
+// ACTUALIZAR tabla
+function actualizarColaboradores(data) {
+  document.querySelectorAll(".colaborador").forEach(x => x.remove());
+  cargarTabla();
+
+  if (!data) return;
+
+  Object.entries(data).forEach(([id, c]) => {
+
+    // eliminar la fila del niño
+    let fila = document.querySelector(`tr[data-nombre="${c.persona}"]`);
+    if (fila) fila.remove();
+
+    // agregar fila con colaborador + botón eliminar
+    const tabla = document.getElementById("tablaPersonas");
+    const filaNueva = document.createElement("tr");
+    filaNueva.classList.add("colaborador");
+
+    filaNueva.innerHTML = `
+      <td colspan="2">
+        <strong>${c.colaborador}</strong> colaborará con <strong>${c.persona}</strong>
+      </td>
+      <td>
+        <button class="btn-delete" onclick="eliminarColaborador('${id}')">Eliminar</button>
+      </td>
+    `;
+
+    tabla.appendChild(filaNueva);
+  });
+}
+</script>
+
+</head>
+<body>
+
+<header>
+  <img src="imagen1.jpg" alt="Imagen izquierda">
+  <h1>Registro de Colaboradores</h1>
+  <img src="imagen1.jpg" alt="Imagen derecha">
+</header>
+
+<table id="tablaPersonas">
+<tr><th>Nombre</th><th>Edad</th><th>Acción</th></tr>
+</table>
+
+</body>
+</html>
